@@ -5,7 +5,9 @@ The rationale for PEP 622 states that "Much of the code to do so tends to consis
 
 I ran two different queries over the standard library, `Tools` and `doc` folders, over 630 000 lines of code in total.
 
-The query finds all if statements with at least two tests of the same variable, where the tests involve `isinstance` or `len`, and where some destrucuring of that variable occurs in the body of the `if` statement.
+## Queries
+
+The first query finds all if statements with at least two tests of the same variable, where the tests involve `isinstance` or `len`, and where some destrucuring of that variable occurs in the body of the `if` statement.
 Destructuring of the variable `var` means any of the following:
 
 * `x, ... = var`
@@ -14,7 +16,15 @@ Destructuring of the variable `var` means any of the following:
 
 https://lgtm.com/query/7291159440077780290/
 
-There are 24 results, of which a few are false positives, leaving the following that could potentially have the test and destructuring combined:
+The second query finds allows for attribute access, but requires at least three tests, to avoid trivial cases.
+
+https://lgtm.com/query/8160264111266768324/
+
+
+
+### Query results
+
+The first query finds 24 results, of which a few are false positives, leaving the following that could potentially have the test and destructuring combined:
 
 https://lgtm.com/projects/g/python/cpython/snapshot/d39328cb48ce1e51ecd377c8b727c91cc8735eb0/files/Tools/pynche/Main.py?sort=name&dir=ASC&mode=heatmap#L192
 https://lgtm.com/projects/g/python/cpython/snapshot/d39328cb48ce1e51ecd377c8b727c91cc8735eb0/files/Lib/argparse.py?sort=name&dir=ASC&mode=heatmap#L2206
@@ -41,6 +51,16 @@ https://lgtm.com/projects/g/python/cpython/snapshot/d39328cb48ce1e51ecd377c8b727
 https://lgtm.com/projects/g/python/cpython/snapshot/d39328cb48ce1e51ecd377c8b727c91cc8735eb0/files/Lib/turtle.py?sort=name&dir=ASC&mode=heatmap#L1852
 https://lgtm.com/projects/g/python/cpython/snapshot/d39328cb48ce1e51ecd377c8b727c91cc8735eb0/files/Lib/turtle.py?sort=name&dir=ASC&mode=heatmap#L1884
 https://lgtm.com/projects/g/python/cpython/snapshot/d39328cb48ce1e51ecd377c8b727c91cc8735eb0/files/Lib/typing.py?sort=name&dir=ASC&mode=heatmap#L710
+
+The second query finds seventeen results. Some overlap with the first query. Once duplicates and false positives are removed, the following are left:
+
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Lib/msilib/__init__.py?sort=name&dir=ASC&mode=heatmap#L107
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Lib/email/_parseaddr.py?sort=name&dir=ASC&mode=heatmap#L116
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Lib/ast.py?sort=name&dir=ASC&mode=heatmap#L80
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Tools/clinic/clinic.py?sort=name&dir=ASC&mode=heatmap#L4479
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Lib/json/encoder.py?sort=name&dir=ASC&mode=heatmap#L357
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Tools/peg_generator/scripts/grammar_grapher.py?sort=name&dir=ASC&mode=heatmap#L56
+https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0c24291ac337d/files/Lib/plistlib.py?sort=name&dir=ASC&mode=heatmap#L719
 
 For each example I have shown the (trimmed) original, and the same code rewritten using PEP 622 matching, and (where relevant) using `type.__contains__`, or a simple `switch` statement, along the lines of PEP 275, for comparison.
 
@@ -960,7 +980,521 @@ Both `turtle.TNavigator.distance` and `turtle.TNavigator.towards` contain the sa
 ```
 
 
+## msilib.add_data
+
+### Original
+
+```python
+    if isinstance(field, int):
+        r.SetInteger(i+1,field)
+    elif isinstance(field, str):
+        r.SetString(i+1,field)
+    elif field is None:
+        pass
+    elif isinstance(field, Binary):
+        r.SetStream(i+1, field.name)
+    else:
+        raise TypeError("Unsupported type %s" % field.__class__.__name__)
+```
+
+### PEP 622
+
+```python
+    match field:
+        case int():
+            r.SetInteger(i+1,field)
+        case str():
+            r.SetString(i+1,field)
+        case Binary(name)):
+            r.SetStream(i+1, name)
+        case _ if field is not None:
+            raise TypeError("Unsupported type %s" % field.__class__.__name__)
+```
+
+### type.__contains__
+
+```python
+    if field in int:
+        r.SetInteger(i+1,field)
+    elif field in str:
+        r.SetString(i+1,field)
+    elif field is None:
+        pass
+    elif field in Binary:
+        r.SetStream(i+1, field.name)
+    else:
+        raise TypeError("Unsupported type %s" % field.__class__.__name__)
+```
+
+
+## email._parseaddr._parsedate_tz
+
+### Original
+
+```python
+    if len(tm) == 2:
+        [thh, tmm] = tm
+        tss = '0'
+    elif len(tm) == 3:
+        [thh, tmm, tss] = tm
+    elif len(tm) == 1 and '.' in tm[0]:
+        # Some non-compliant MUAs use '.' to separate time elements.
+        tm = tm[0].split('.')
+        if len(tm) == 2:
+            [thh, tmm] = tm
+            tss = 0
+        elif len(tm) == 3:
+            [thh, tmm, tss] = tm
+    else:
+        return None
+```
+
+### PEP 622
+
+```python
+    match tm:
+        case [thh, tmm]:
+            tss = '0'
+        case [thh, tmm, tss]:
+            pass
+        case [tm0] if '.' in tm[0]:
+            # Some non-compliant MUAs use '.' to separate time elements.
+            tm = tm[0].split('.')
+            match tm:
+                case [thh, tmm]:
+                    tss = 0
+                case [thh, tmm, tss]:
+                    pass
+        case _:
+            return None
+```
+
+### Rewritten more concisely in Python 3.9
+
+```python
+    if len(tm) == 1 and '.' in tm[0]:
+        # Some non-compliant MUAs use '.' to separate time elements.
+        tm = tm[0].split('.')
+    if len(tm) in (2,3):
+        thh, tmm, *tss = tm
+        tss = tss[0] if tss else '0'
+    else:
+        return None
+```
+
+## ast.liter_eval
+
+### Original
+
+```python
+    if isinstance(node, Constant):
+        return node.value
+    elif isinstance(node, Tuple):
+        return tuple(map(_convert, node.elts))
+    elif isinstance(node, List):
+        return list(map(_convert, node.elts))
+    elif isinstance(node, Set):
+        return set(map(_convert, node.elts))
+    elif (isinstance(node, Call) and isinstance(node.func, Name) and
+            node.func.id == 'set' and node.args == node.keywords == []):
+        return set()
+    elif isinstance(node, Dict):
+        if len(node.keys) != len(node.values):
+            _raise_malformed_node(node)
+        return dict(zip(map(_convert, node.keys),
+                        map(_convert, node.values)))
+    elif isinstance(node, BinOp) and isinstance(node.op, (Add, Sub)):
+        left = _convert_signed_num(node.left)
+        right = _convert_num(node.right)
+        if isinstance(left, (int, float)) and isinstance(right, complex):
+            if isinstance(node.op, Add):
+                return left + right
+            else:
+                return left - right
+
+```
+
+### PEP 622 version
+
+```
+    match node:
+        case Constant():
+            return node.value
+        case Tuple():
+            return tuple(map(_convert, node.elts))
+        case List():
+            return list(map(_convert, node.elts))
+        case Set():
+            return set(map(_convert, node.elts))
+        case Call(func=Name(id='set'), args=[], keywords=[])):
+            return set()
+        case Dict(keys, values):
+            if len(keys) != len(values):
+                _raise_malformed_node(node)
+            return dict(zip(map(_convert, keys),
+                            map(_convert, values)))
+        case BinOp(op=Add() | Sub()):
+            left = _convert_signed_num(node.left)
+            right = _convert_num(node.right)
+            if isinstance(left, (int, float)) and isinstance(right, complex):
+                if isinstance(node.op, Add):
+                    return left + right
+                else:
+                    return left - right
+```
+
+### Using type.__contains__
+
+```
+    if node in Constant:
+        return node.value
+    elif node in Tuple:
+        return tuple(map(_convert, node.elts))
+    elif node in List:
+        return list(map(_convert, node.elts))
+    elif node in Set:
+        return set(map(_convert, node.elts))
+    elif (node in Call and node.func in Name and
+            node.func.id == 'set' and node.args == node.keywords == []):
+        return set()
+    elif node in Dict:
+        if len(node.keys) != len(node.values):
+            _raise_malformed_node(node)
+        return dict(zip(map(_convert, node.keys),
+                        map(_convert, node.values)))
+    elif node in BinOp and (node.op in Add or node.op in Sub):
+        left = _convert_signed_num(node.left)
+        right = _convert_num(node.right)
+        if (left in int or left in float) and right in complex:
+            if node.op in Add:
+                return left + right
+            else:
+                return left - right
+```
+
+
+## plistlib._BinaryPlistWriter._write_object
+
+I've elided a lot of complex logic int cases, as it is not relevant.
+
+### Original
+
+```python
+    if value is None:
+        self._fp.write(b'\x00')
+    elif value is False:
+        self._fp.write(b'\x08')
+    elif value is True:
+        self._fp.write(b'\x09')
+    elif isinstance(value, int):
+        ... # process int
+    elif isinstance(value, float):
+        self._fp.write(struct.pack('>Bd', 0x23, value))
+    elif isinstance(value, datetime.datetime):
+        f = (value - datetime.datetime(2001, 1, 1)).total_seconds()
+        self._fp.write(struct.pack('>Bd', 0x33, f))
+    elif isinstance(value, (bytes, bytearray)):
+        self._write_size(0x40, len(value))
+        self._fp.write(value)
+    elif isinstance(value, str):
+        ... # process str
+    elif isinstance(value, UID):
+        ... # process UID -- Uses value.data
+    elif isinstance(value, (list, tuple)):
+        refs = [self._getrefnum(o) for o in value]
+        s = len(refs)
+        self._write_size(0xA0, s)
+        self._fp.write(struct.pack('>' + self._ref_format * s, *refs))
+    elif isinstance(value, dict):
+        ... # process dict
+    else:
+        raise TypeError(value)
+```
+
+### PEP 622
+
+```python
+    match value:
+        case False:
+            self._fp.write(b'\x08')
+        case True:
+            self._fp.write(b'\x09')
+        case int():
+            ... # process int
+        case float():
+            self._fp.write(struct.pack('>Bd', 0x23, value))
+        case datetime.datetime():
+            f = (value - datetime.datetime(2001, 1, 1)).total_seconds()
+            self._fp.write(struct.pack('>Bd', 0x33, f))
+        case bytes() | bytearray():
+            self._write_size(0x40, len(value))
+            self._fp.write(value)
+        case str():
+            ... # process str
+        case UID(data):
+            ... # process UID -- Uses data
+        case [*_]:
+            refs = [self._getrefnum(o) for o in value]
+            s = len(refs)
+            self._write_size(0xA0, s)
+            self._fp.write(struct.pack('>' + self._ref_format * s, *refs))
+        case dict():
+            ... # process dict
+        case _:
+            if value is None:
+                self._fp.write(b'\x00')
+            else:
+                raise TypeError(value)
+
+```
+
+### type.__contains__
+
+```python
+   if value is None:
+        self._fp.write(b'\x00')
+    elif value is False:
+        self._fp.write(b'\x08')
+    elif value is True:
+        self._fp.write(b'\x09')
+    elif value in int:
+        ... # process int
+    elif value in float:
+        self._fp.write(struct.pack('>Bd', 0x23, value))
+    elif value in datetime.datetime:
+        f = (value - datetime.datetime(2001, 1, 1)).total_seconds()
+        self._fp.write(struct.pack('>Bd', 0x33, f))
+    elif value in bytes or value in bytearray:
+        self._write_size(0x40, len(value))
+        self._fp.write(value)
+    elif value in str:
+        ... # process str
+    elif value in UID:
+        ... # process UID -- Uses value.data
+    elif value in list or value in tuple:
+        refs = [self._getrefnum(o) for o in value]
+        s = len(refs)
+        self._write_size(0xA0, s)
+        self._fp.write(struct.pack('>' + self._ref_format * s, *refs))
+    elif value in dict:
+        ... # process dict
+    else:
+        raise TypeError(value)
+
+```
+
+
+## json.encoder._iterencode_dict
+
+### Original
+
+```python
+    if isinstance(key, str):
+        pass
+    elif isinstance(key, float):
+        key = _floatstr(key)
+    elif key is True:
+        key = 'true'
+    elif key is False:
+        key = 'false'
+    elif key is None:
+        key = 'null'
+    elif isinstance(key, int):
+        key = _intstr(key)
+    elif _skipkeys:
+        continue
+    else:
+        raise TypeError(f'keys must be str, int, float, bool or None, '
+                        f'not {key.__class__.__name__}')
+```
+
+### PEP 622
+
+```python
+    match key:
+        case str():
+            pass
+        case float():
+            key = _floatstr(key)
+        case True:
+            key = 'true'
+        case False:
+            key = 'false'
+        case None:
+            key = 'null'
+        case int():
+            key = _intstr(key)
+        case _:
+            if _skipkeys:
+                continue
+            else:
+                raise TypeError(f'keys must be str, int, float, bool or None, '
+                                f'not {key.__class__.__name__}')
+```
+
+### type.__contains__
+
+```python
+    if key in str:
+        pass
+    elif key in float:
+        key = _floatstr(key)
+    elif key is None:
+        key = 'null'
+    elif key is True:
+        key = 'true'
+    elif key is False:
+        key = 'false'
+    elif key in int:
+        key = _intstr(key)
+    elif _skipkeys:
+        continue
+    else:
+        raise TypeError(f'keys must be str, int, float, bool or None, '
+                        f'not {key.__class__.__name__}')
+```
+
+## name
+
+### Original
+
+```python
+
+```
+
+### PEP 622
+
+```python
+
+```
+
+### type.__contains__
+
+```python
+
+```
+
+
+## Tools/peg_generator/scripts/grammar_grapher.py references_for_item()
+
+### Original
+
+```python
+    if isinstance(item, Alt):
+        return [_ref for _item in item.items for _ref in references_for_item(_item)]
+    elif isinstance(item, Cut):
+        return []
+    elif isinstance(item, Group):
+        return references_for_item(item.rhs)
+    elif isinstance(item, Lookahead):
+        return references_for_item(item.node)
+    elif isinstance(item, NamedItem):
+        return references_for_item(item.item)
+    elif isinstance(item, NameLeaf):
+        if item.value == "ENDMARKER":
+            return []
+        return [item.value]
+    elif isinstance(item, Leaf):
+        return []
+    elif isinstance(item, Opt):
+        return references_for_item(item.node)
+    elif isinstance(item, Repeat):
+        return references_for_item(item.node)
+    elif isinstance(item, Rhs):
+        return [_ref for alt in item.alts for _ref in references_for_item(alt)]
+    elif isinstance(item, Rule):
+        return references_for_item(item.rhs)
+    else:
+        raise RuntimeError(f"Unknown item: {type(item)}")
+
+```
+### PEP 622
+
+```python
+    match item:
+        case Alt(items):
+            return [_ref for _item in items for _ref in references_for_item(_item)]
+        case Cut():
+            return []
+        case Group(rhs):
+            return references_for_item()
+        case Lookahead(node):
+            return references_for_item(node)
+        case NamedItem(item):
+            return references_for_item(item)  # item now refers to item.item
+        case NameLeaf(value):
+            if value == "ENDMARKER":
+                return []
+            return [value]
+        case Leaf():
+            return []
+        case Opt(node):
+            return references_for_item(node)
+        case Repeat(node):
+            return references_for_item(node)
+        case Rhs(alts):
+            return [_ref for alt in alts for _ref in references_for_item(alt)]
+        case Rule(rhs):
+            return references_for_item(rhs)
+        else:
+            raise RuntimeError(f"Unknown item: {type(item)}")
+```
+
+### type.__contains__
+
+```python
+    if item in Alt:
+        return [_ref for _item in item.items for _ref in references_for_item(_item)]
+    elif item in Cut:
+        return []
+    elif item in Group:
+        return references_for_item(item.rhs)
+    elif item in Lookahead:
+        return references_for_item(item.node)
+    elif item in NamedItem:
+        return references_for_item(item.item)
+    elif item in NameLeaf:
+        if item.value == "ENDMARKER":
+            return []
+        return [item.value]
+    elif item in Leaf:
+        return []
+    elif item in Opt:
+        return references_for_item(item.node)
+    elif item in Repeat:
+        return references_for_item(item.node)
+    elif item in Rhs:
+        return [_ref for alt in item.alts for _ref in references_for_item(alt)]
+    elif item in Rule:
+        return references_for_item(item.rhs)
+    else:
+        raise RuntimeError(f"Unknown item: {type(item)}")
+```
+
+
+## mailbox.MaildirMessage._explain_to
+
+### Original
+
+```python
+```
+
+### PEP 622
+
+```python
+
+```
+
+### type.__contains__
+
+```python
+
+```
+
+
 # Conclusions
+
+## Overview
 
 The 18 examples can be broken down into the following categories:
 
@@ -972,6 +1506,8 @@ The 18 examples can be broken down into the following categories:
 The case where testing is done on both type and length (`dataclasses.make_dataclass`) is
 the only case where PEP 622 shows an improvement in readability.
 It would appear that the benefits of PEP 622 are slight.
+
+## Sequence unpacking
 
 That over half the cases test for a narrow range of sequence lengths suggests that a zero-or-one
 unpacking syntax might be useful; `?name` as an alternative to `*name`.
@@ -988,4 +1524,23 @@ Using this extension, the `smtpd.parseargs` example could be rewritten as:
         usage(1, 'Invalid arguments: %s' % COMMASPACE.join(args))
 ```
 
+## Unpacking is often all the code does
+
+A common pattern seems to be the following:
+
+```
+    elif len(args) == 1:
+        val = args[0]
+```
+
+Whilst this converts neatly to PEP 622 syntax, it doesn't improve the code.
+
+```
+    match args:
+        case [val]:
+            pass
+```
+
+because the only purpose of the block was to assign `args[0]` to `val`, we need to insert a `pass`.
+This degrades readability as the pattern match is used for side-effect not pure matching.
 

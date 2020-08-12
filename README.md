@@ -1,7 +1,7 @@
 # Objections to PEP 622 (Structural Pattern Matching)
 
 
-The authors believe that for a PEP to succeed it needs to show two things.
+The author believe that for a PEP to succeed it needs to show two things.
  
  1. Exactly what problem is being solved, or need is to be fulfilled, and that is a sufficiently large problem, or need, to merit the proposed change.
  2. That the proposed change is the best known solution for the problem being addressed.
@@ -11,6 +11,8 @@ We believe that PEP 622 fails to show either of these things.
 PEP 622 provides only three examples of where the proposed pattern matching, yet proposes a very large change to the language; possibly the largest single change since Python 1.
 
 PEP 622 claims to be a general way to express a number of related things, but fails to live up to that promise as it involves many special cases and upsets any intuition that comes from familiarity with the rest of the language.
+
+It also claims to be *structural* pattern matching, but relies on the interface of objects, not their structure when unpacking.
 
 
 ### Django example
@@ -42,6 +44,7 @@ match value:
 
 This is highly confusing. The use of walrus operator with a sequence match makes the order of evaluation hard to follow. The test `if v` after `v` is assigned is confusing in a `match` statement which, one would expect, does assignment only when a match occurs.
 This means that if `value` has a length of one, then `[]` is assigned to `v`, even though the the first case does not match.
+
 It shouldn't be this complicated.
 
 
@@ -55,7 +58,6 @@ match value:
         value = tuple(v)
     case _:
         label = key.replace('_', ' ').title()
-
 ```
 
 
@@ -139,6 +141,13 @@ match response.status:
 
 However, PEP 626 does not prohibit the above syntax, it merely assigns `response.status` to `HTTP_OK` regardless of the status and changing what was assumed to be a constant.
 
+## Analysis of the potential usefulness of PEP 626
+
+See ./stdlib_examples.md for detailed analysis.
+
+Searching the entire CPython Python code base (~630k LOC) shows *just one* case, where PEP 622 shows readibility advantages over much simpler alternatives.
+
+
 ## Alternative approaches
 
 The response to PEP 626 was positive, suggesting that there is demand for some additional syntax.
@@ -147,7 +156,9 @@ Very few examples were given, however, of where it would be useful. So it is har
 
 ## Examples of chained `elif` tests in CPython
 
-There are five examples of in the standard library of an `if` statement containing two or more `elif` clauses which include an `isinstance` check. Query: https://lgtm.com/query/8460807749847811825/
+The rationale for PEP 622 states 
+
+There are twelve examples of in the standard library of an `if` statement containing two or more `elif` clauses which include an `isinstance` check. Query: https://lgtm.com/query/8460807749847811825/
 
 These are:
 https://lgtm.com/projects/g/python/cpython/snapshot/cb3202860b5cd12bcfda1489774333cb6747ff5e/files/Lib/ast.py?sort=name&dir=ASC&mode=heatmap#L80
@@ -155,6 +166,11 @@ https://lgtm.com/projects/g/python/cpython/snapshot/cb3202860b5cd12bcfda14897743
 https://lgtm.com/projects/g/python/cpython/snapshot/cb3202860b5cd12bcfda1489774333cb6747ff5e/files/Lib/http/cookies.py?sort=name&dir=ASC&mode=heatmap#L408
 https://lgtm.com/projects/g/python/cpython/snapshot/cb3202860b5cd12bcfda1489774333cb6747ff5e/files/Lib/unittest/loader.py?sort=name&dir=ASC&mode=heatmap#L190
 https://lgtm.com/projects/g/python/cpython/snapshot/cb3202860b5cd12bcfda1489774333cb6747ff5e/files/Lib/random.py?sort=name&dir=ASC&mode=heatmap#L143
+
+
+For each example, we show the original Python 3.9 version, a version with PEP 622, a version with `type.__contains__` and a version with both a `switch` statement and `type.__contains__`.
+
+Overall there is no clear advantage in readability for any form, although using `type.__contains__` leads to the most compact code in general.
 
 ### ast.literal_eval
 
@@ -563,9 +579,11 @@ Note that if PEP 604 is accepted, this could potentially be rewritten as:
         else:
             if a not in type(None) | int | float | str | bytes | bytearray:
                 ...
+```
+
+There a further cases in the `Tools` folder, for the reader to experiment with ;)
 
 
-There a further XXX cases in the `Tools` folder (which I had to search the hard way using `git grep`) 
 
 
 ## Notes
