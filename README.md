@@ -1,4 +1,4 @@
-# Objections to PEP 622 (Structural Pattern Matching)
+# Critique of PEP 622 (Structural Pattern Matching)
 
 
 The author believe that for a PEP to succeed it needs to show two things.
