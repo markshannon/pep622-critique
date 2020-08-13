@@ -143,7 +143,7 @@ However, PEP 626 does not prohibit the above syntax, it merely assigns `response
 
 ## Analysis of the potential usefulness of PEP 626
 
-See ./stdlib_examples.md for detailed analysis.
+See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 
 Searching the entire CPython Python code base (~630k LOC) shows one case, where PEP 622 shows readibility advantages over much simpler alternatives.
 That's about line of code per 100 thousand.
@@ -163,7 +163,7 @@ Very few examples were given, however, of where it would be useful. So it is har
 4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s.
 5. Implement more powerful unpacking syntax, for example zero-or-one matches, or named matches.
 
-See ./switch.md for detail on a possible switch statement.
+See [Possible switch statement](./switch.md) for details of a possible switch statement.
 
 ## Failings
 
