@@ -1215,10 +1215,11 @@ I've elided a lot of complex logic int cases, as it is not relevant.
 
 ```python
     match value:
-        case False:
-            self._fp.write(b'\x08')
-        case True:
-            self._fp.write(b'\x09')
+        case bool():
+            if value:
+                self._fp.write(b'\x09')
+            else:
+                self._fp.write(b'\x08')
         case int():
             ... # process int
         case float():
@@ -1316,10 +1317,8 @@ I've elided a lot of complex logic int cases, as it is not relevant.
             pass
         case float():
             key = _floatstr(key)
-        case True:
-            key = 'true'
-        case False:
-            key = 'false'
+        case bool():
+            key = 'true' if key else 'false'
         case None:
             key = 'null'
         case int():
@@ -1666,4 +1665,51 @@ Whilst this converts neatly to PEP 622 syntax, it doesn't improve the code.
 
 because the only purpose of the block was to assign `args[0]` to `val`, we need to insert a `pass`.
 This degrades readability as the pattern match is used for side-effect not pure matching.
+
+## Dangerous handling of booleans
+
+Any match involving booleans and ints must match on `case bool()`, not `case True` or case `False` and must do
+so before any `case int()`, `case 0`, or `case 1`.
+This is surprising and dangerous.
+
+Starting with the json decoder code as an example:
+
+```python
+    ...
+    elif key is True:
+        key = 'true'
+    elif key is False:
+        key = 'false'
+    elif isinstance(key, int):
+        key = _intstr(key)
+    ...
+```
+
+it is too easy to make the transliteration:
+
+```python
+match key:
+    ...
+    case True:
+        key = 'true'
+    case False:
+        key = 'false'
+    case int():
+        key = _intstr(key)
+    ...
+```
+
+but this is a mis-translation. A key of `1` now becomes `"true"` instead of `"1"`.
+
+The correct, and non-obvious, translation is:
+
+```python
+match key:
+    ...
+    case bool():
+        key = 'true' if key else 'false'
+    case int():
+        key = _intstr(key)
+    ...
+```
 
