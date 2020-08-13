@@ -1,19 +1,20 @@
 # Critique of PEP 622 (Structural Pattern Matching)
 
 
-The author believe that for a PEP to succeed it needs to show two things.
+For a PEP to succeed it needs to show two things.
  
  1. Exactly what problem is being solved, or need is to be fulfilled, and that is a sufficiently large problem, or need, to merit the proposed change.
  2. That the proposed change is the best known solution for the problem being addressed.
 
-We believe that PEP 622 fails to show either of these things.
+PEP 622 fails to show either of these things.
 
-PEP 622 provides only three examples of where the proposed pattern matching, yet proposes a very large change to the language; possibly the largest single change since Python 1.
+PEP 622 provides only three examples of where the proposed pattern matching would be useful, yet proposes a very large change to the language; possibly the largest single change since Python 1.
 
 PEP 622 claims to be a general way to express a number of related things, but fails to live up to that promise as it involves many special cases and upsets any intuition that comes from familiarity with the rest of the language.
 
 It also claims to be *structural* pattern matching, but relies on the interface of objects, not their structure when unpacking.
 
+## Analysis of the examples in PEP 622
 
 ### Django example
 
@@ -246,7 +247,7 @@ match var:
 
 Which doesn't seem so bad at first glance, but PEP 622 treats `self.x` as a *constant*, which it clearly is not.
 
-### Attribute lookup side-effects
+### Attribute lookups with side-effects
 
 PEP 622 does not specify order of execution, or the number of times that an attribute may be executed. In fact, it explicitly states that "User code relying on that behavior should be considered buggy."
 
