@@ -2,8 +2,8 @@
 
 
 For a PEP to succeed it needs to show two things.
- 
- 1. Exactly what problem is being solved, or need is to be fulfilled, and that is a sufficiently large problem, or need, to merit the proposed change.
+
+ 1. Exactly what problem is being solved, or what need is to be fulfilled, and that is a sufficiently large problem or need to merit the proposed change.
  2. That the proposed change is the best known solution for the problem being addressed.
 
 PEP 622 fails to show either of these things.
@@ -30,8 +30,9 @@ else:
     label = key.replace('_', ' ').title()
 ```
 
-This is quite a complex example. The case we want to distinguish is where `value` is either a `list` or `tuple`, there are at least elements in `value` and the last element is either a `Promise` or a `str`.
-The code is not very concise, but is reasonable clear.
+This is quite a complex example. The case we want to distinguish is where `value` is either a `list` or `tuple`, there are at least 2 elements in `value`,
+and the last element is either a `Promise` or a `str`.
+The code is not very concise, but is reasonably clear.
 
 The version of this example given in PEP 626 is as follows:
 
@@ -43,14 +44,14 @@ match value:
         label = key.replace('_', ' ').title()
 ```
 
-This is highly confusing. The use of walrus operator with a sequence match makes the order of evaluation hard to follow. The test `if v` after `v` is assigned is confusing in a `match` statement which, one would expect, does assignment only when a match occurs.
+This is highly confusing. The use of the walrus operator with a sequence match makes the order of evaluation hard to follow. The test `if v` after `v` is assigned is confusing in a `match` statement which, one would expect, does assignment only when a match occurs.
 This means that if `value` has a length of one, then `[]` is assigned to `v`, even though the the first case does not match.
 
 It shouldn't be this complicated.
 
 
 Also note:
-The match version has different semantics. This has been pointed out to the PEP's authors but they seem unwilling to either update the example or state in the PEP that the semantics are different.
+The match version has different semantics. This has been pointed out to the PEP's authors but they have so far declined to either update the example or state in the PEP that the semantics are different.
 If the exact semantics are to be retained, then the PEP 626 example should read
 
 ```
@@ -104,7 +105,7 @@ def is_tuple(node):
 
 which is shorter, arguably clearer, and needs no new syntax.
 
-### Http response example
+### HTTP response example
 
 ```
 match response.status:
@@ -121,8 +122,9 @@ match response.status:
         raise RequestError("we couldn't get the data")
 ```
 
-The final example is a simple switch statement, and shows that there may be some merit in such a proposal.
-However PEP 626 prevents the use of simple symbolic constants so the statement *cannot* be written as
+The final example is a simple switch statement, and shows that there may be some merit in adding
+switch-statement-like functionality to Python.
+However, PEP 626 prevents the use of simple symbolic constants, so the statement *cannot* be written as
 
 ```
 match response.status:
@@ -139,21 +141,22 @@ match response.status:
         raise RequestError("we couldn't get the data")
 ```
 
-However, PEP 626 does not prohibit the above syntax, it merely assigns `response.status` to `HTTP_OK` regardless of the status and changing what was assumed to be a constant.
+Note that PEP 626 does not prohibit the above syntax.  It merely assigns `response.status` to `HTTP_OK` regardless of the status and changing what was assumed to be a constant.
 
 ## Analysis of the potential usefulness of PEP 626
 
 See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 
-Searching the entire CPython Python code base (~630k LOC) shows one case, where PEP 622 shows readibility advantages over much simpler alternatives.
-That's about line of code per 100 thousand.
+Searching the entire CPython Python code base (~630k LOC) shows one case where PEP 622 shows readability advantages over much simpler alternatives.
+That's about one line of code per 100 thousand.
 
-The analysis clearly shows that there is no need to combined type and length tests with destructuring. Having them seperate is much simpler and causes no actual loss in expressibilty.
+This demonstrates that there's no advantage to combining type and length tests with destructuring.  Nor does PEP 622 promise to make the code faster.
+Having them separate is much simpler and causes no actual loss in expressibilty or speed.
 
 ## Alternative approaches
 
 The response to PEP 626 was positive, suggesting that there is demand for some additional syntax.
-Very few examples were given, however, of where it would be useful. So it is hard to guess what are the desirable features. The rationale suggests that chains of `elif`s involving type tests are well suited to be improved by the match statement. 
+Very few examples were given, however, of where it would be useful. So it's hard to guess what the desirable features are. The rationale suggests that chains of `elif`s involving type tests are well suited to be improved by the match statement, though these are comparatively rare in Python where "duck typing" is the norm.
 
 ### Suggestions
 
@@ -163,20 +166,20 @@ Very few examples were given, however, of where it would be useful. So it is har
 4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s.
 5. Implement more powerful unpacking syntax, for example zero-or-one matches, or named matches.
 
-See [Possible switch statement](./switch.md) for details of a possible switch statement.
+See [Possible switch statement](./switch.md) for conjecture regarding a possible switch statement.
 
 ## Failings
 
-PEP 622 is large and complicated, which makes it far to easy to make mistakes.
-Many features that might be assumed to do one thing, in fact do another; silently changing the meaning of the program rather than failing.
+PEP 622 is large and complicated, which makes it far too easy to make mistakes.
+Many features that might be assumed to do one thing in fact do another, silently changing the meaning of the program rather than failing.
 
 ### Handling of booleans
 
-Any match involving booleans and ints must match on `case bool()`, not `case True` or case `False` and must do
-so before any `case int()`, `case 0`, or `case 1`.
+Any match involving booleans and ints must match on `case bool()`, not `case True` or case `False`,
+and must do so before any `case int()`, `case 0`, or `case 1`.
 This is surprising and dangerous.
 
-Starting with the json decoder code as an example:
+Starting with the JSON encoder code as an example:
 
 ```python
     ...
@@ -217,10 +220,10 @@ match key:
     ...
 ```
 
-### Cannot use symbolic constants
+### Cannot use (undotted) symbolic constants
 
-Treating the match statement as a switch, as several people on the python-dev mailing list did,
-then one might write the following:
+Using the match statement as a switch statement, as several people on the python-dev mailing list have done,
+one might write the following:
 
 ```python
 match repsonse:
@@ -234,8 +237,8 @@ but if repsonse is `HTTP_UNAUTHORIZED` this code not only does the wrong thing, 
 
 ### Self attributes
 
-PEP 622 treats any name with a dot in it as a constant, so the way to fix the above code is to use a dotted name; `HTTP_CONSTANTS.HTTP_OK` instead of just `HTTP_OK`.
-The problem with this is that a minor syntax element within the pattern determines whether it is read or written to. This is likely to be a source of confusion when using attributes of local variables, particularly `self`. 
+PEP 622 treats any name with a dot in it as a constant, so the way to fix the previous example is to use a dotted name; `HTTP_CONSTANTS.HTTP_OK` instead of just `HTTP_OK`.
+The problem with this is that a minor syntax element within the pattern determines whether it is read or written to. This is likely to be a source of confusion when using attributes of local variables, particularly `self`.
 
 ```python
 match var:
@@ -245,7 +248,9 @@ match var:
         ...
 ```
 
-Which doesn't seem so bad at first glance, but PEP 622 treats `self.x` as a *constant*, which it clearly is not.
+A programmer unfamiliar with PEP 622 might interpret these two case statements as doing similar things.
+But PEP 622 interprets them very differently.  In particular, it interprets `self.x` as a *constant*
+which it clearly is not.
 
 ### Attribute lookups with side-effects
 
@@ -260,5 +265,5 @@ ORMs and many other libraries have side-effecting properties. Even the standard 
 
 # Summary
 
-PEP 622 promises easy to use structural pattern matching, but delivers a complicated to use sub-language of little value with many complexities and corner cases.
+PEP 622 promises easy-to-use structural pattern matching, but delivers a complicated-to-use sub-language of little value with many complexities and corner cases.
 It should be rejected.
