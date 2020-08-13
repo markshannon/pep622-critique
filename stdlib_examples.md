@@ -1354,24 +1354,147 @@ I've elided a lot of complex logic int cases, as it is not relevant.
                         f'not {key.__class__.__name__}')
 ```
 
-## name
+## /Tools/clinic/clinic.py DSLParser.state_parameter()
 
 ### Original
 
 ```python
-
+    if isinstance(expr, ast.Name) and expr.id == 'NULL':
+        value = NULL
+        py_default = '<unrepresentable>'
+        c_default = "NULL"
+    elif (isinstance(expr, ast.BinOp) or
+        (isinstance(expr, ast.UnaryOp) and
+            not (isinstance(expr.operand, ast.Num) or
+                (hasattr(ast, 'Constant') and
+                isinstance(expr.operand, ast.Constant) and
+                type(expr.operand.value) in (int, float, complex)))
+        )):
+        c_default = kwargs.get("c_default")
+        if not (isinstance(c_default, str) and c_default):
+            fail("When you specify an expression (" + repr(default) + ") as your default value,\nyou MUST specify a valid c_default." + ast.dump(expr))
+        py_default = default
+        value = unknown
+    elif isinstance(expr, ast.Attribute):
+        a = []
+        n = expr
+        while isinstance(n, ast.Attribute):
+            a.append(n.attr)
+            n = n.value
+        if not isinstance(n, ast.Name):
+            fail("Unsupported default value " + repr(default) + " (looked like a Python constant)")
+        a.append(n.id)
+        py_default = ".".join(reversed(a))
+        c_default = kwargs.get("c_default")
+        if not (isinstance(c_default, str) and c_default):
+            fail("When you specify a named constant (" + repr(py_default) + ") as your default value,\nyou MUST specify a valid c_default.")
+        try:
+            value = eval(py_default)
+        except NameError:
+            value = unknown
+    else:
+        value = ast.literal_eval(expr)
+        py_default = repr(value)
+        if isinstance(value, (bool, None.__class__)):
+            c_default = "Py_" + py_default
+        elif isinstance(value, str):
+            c_default = c_repr(value)
+        else:
+            c_default = py_default
 ```
 
 ### PEP 622
 
 ```python
+    match expr:
+        case ast.Name(id='NULL'):
+            value = NULL
+            py_default = '<unrepresentable>'
+            c_default = "NULL"
+        case ast.BinOp() | ast.UnaryOp() if not (
+                isinstance(expr.operand, ast.Num) or
+                (hasattr(ast, 'Constant') and
+                isinstance(expr.operand, ast.Constant) and
+                type(expr.operand.value) in (int, float, complex))):
+            c_default = kwargs.get("c_default")
+            if not (isinstance(c_default, str) and c_default):
+                fail("When you specify an expression (" + repr(default) + ") as your default value,\nyou MUST specify a valid c_default." + ast.dump(expr))
+            py_default = default
+            value = unknown
+        case ast.Attribute():
+            a = []
+            n = expr
+            while isinstance(n, ast.Attribute):
+                a.append(n.attr)
+                n = n.value
+            if not isinstance(n, ast.Name):
+                fail("Unsupported default value " + repr(default) + " (looked like a Python constant)")
+            a.append(n.id)
+            py_default = ".".join(reversed(a))
+            c_default = kwargs.get("c_default")
+            if not (isinstance(c_default, str) and c_default):
+                fail("When you specify a named constant (" + repr(py_default) + ") as your default value,\nyou MUST specify a valid c_default.")
+            try:
+                value = eval(py_default)
+            except NameError:
+                value = unknown
+        case _:
+            value = ast.literal_eval(expr)
+            py_default = repr(value)
+            if isinstance(value, (bool, None.__class__)):
+                c_default = "Py_" + py_default
+            elif isinstance(value, str):
+                c_default = c_repr(value)
+            else:
+                c_default = py_default
 
 ```
 
 ### type.__contains__
 
 ```python
-
+    if expr in ast.Name and expr.id == 'NULL':
+        value = NULL
+        py_default = '<unrepresentable>'
+        c_default = "NULL"
+    elif expr in ast.BinOp or
+        (expr in ast.UnaryOp and
+            not (expr.operand in ast.Num or
+                (hasattr(ast, 'Constant') and
+                expr.operand in ast.Constant and
+                type(expr.operand.value) in (int, float, complex)))
+        ):
+        c_default = kwargs.get("c_default")
+        if not (c_default in str and c_default):
+            fail("When you specify an expression (" + repr(default) + ") as your default value,\nyou MUST specify a valid c_default." + ast.dump(expr))
+        py_default = default
+        value = unknown
+    elif expr in ast.Attribute:
+        a = []
+        n = expr
+        while n in ast.Attribute:
+            a.append(n.attr)
+            n = n.value
+        if n not in ast.Name:
+            fail("Unsupported default value " + repr(default) + " (looked like a Python constant)")
+        a.append(n.id)
+        py_default = ".".join(reversed(a))
+        c_default = kwargs.get("c_default")
+        if not (isinstance(c_default, str) and c_default):
+            fail("When you specify a named constant (" + repr(py_default) + ") as your default value,\nyou MUST specify a valid c_default.")
+        try:
+            value = eval(py_default)
+        except NameError:
+            value = unknown
+    else:
+        value = ast.literal_eval(expr)
+        py_default = repr(value)
+        if value in bool or value is None:
+            c_default = "Py_" + py_default
+        elif value in str:
+            c_default = c_repr(value)
+        else:
+            c_default = py_default
 ```
 
 
