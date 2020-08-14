@@ -16,6 +16,31 @@ It also claims to be *structural* pattern matching, but relies on the interface 
 
 ## Analysis of the examples in PEP 622
 
+### make_point_3d example
+
+```python
+def make_point_3d(pt):
+    match pt:
+        case (x, y):
+            return Point3d(x, y, 0)
+        case (x, y, z):
+            return Point3d(x, y, z)
+        case Point2d(x, y):
+            return Point3d(x, y, 0)
+        case Point3d(_, _, _):
+            return pt
+        case _:
+            raise TypeError("not a point we support")
+```
+
+What's interesting about this example isn't what it *is* so much as what it *isn't.*
+The code creates an object but it's written as a module-level function.  Why doesn't
+this example show us `Point3d.__init__` written using pattern matching?  Because 622's
+pattern matching doesn't work well in `__init__` methods--the "capture pattern" can't
+write to attributes of `self`.  The PEP claims this example is clearer when written
+using pattern matching, but the code would be even clearer if it lived in the proper
+place (`Point3d.__init__`), where 622's awkward limitations render it much less useful.
+
 ### Django example
 
 ```python
