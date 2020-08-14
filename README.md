@@ -172,7 +172,7 @@ Note that PEP 626 does not prohibit the above syntax.  It merely assigns `respon
 
 See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 
-Searching the entire CPython Python code base (~630k LOC) shows one case where PEP 622 shows readability advantages over much simpler alternatives.
+Searching the entire CPython Python code base (~630k LOC) shows a few of cases where PEP 622 shows readability advantages over much simpler alternatives.
 That's about one line of code per 100 thousand.
 
 This demonstrates that there's no advantage to combining type and length tests with destructuring.  Nor does PEP 622 promise to make the code faster.
@@ -191,7 +191,8 @@ Very few examples were given, however, of where it would be useful. So it's hard
 4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s.
 5. Implement more powerful unpacking syntax, for example zero-or-one matches, or named matches.
 
-See [Possible switch statement](./switch.md) for conjecture regarding a possible switch statement.
+See [Possible switch statement](./switch.md) for a hypothetical switch statement.
+Note that the suggested syntax is just for comparison; there are many alternatives. See [PEP 3103](https://www.python.org/dev/peps/pep-3103/).
 
 ## Failings
 
