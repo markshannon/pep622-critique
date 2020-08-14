@@ -34,12 +34,36 @@ def make_point_3d(pt):
 ```
 
 What's interesting about this example isn't what it *is* so much as what it *isn't.*
-The code creates an object but it's written as a module-level function.  Why doesn't
-this example show us `Point3d.__init__` written using pattern matching?  Because 622's
-pattern matching doesn't work well in `__init__` methods--the "capture pattern" can't
-write to attributes of `self`.  The PEP claims this example is clearer when written
-using pattern matching, but the code would be even clearer if it lived in the proper
-place (`Point3d.__init__`), where 622's awkward limitations render it much less useful.
+The code creates an object but it's written as a module-level function.
+
+Why doesn't this example show us `Point3d.__init__` written using pattern matching?
+The authors' intent may well be to show handling of classes outside of the author's control,
+but many classes are within the author's control, in which case the logic should be included
+in `Point3d.__init__`.
+
+Unfortunately, PEP 622's pattern matching doesn't work well in `__init__` methods; the "capture pattern" can't
+write to attributes of `self`. PEP 622 claims this example is clearer when written
+using pattern matching, but PEP 622's limitations make it less useful.
+Since assignments to `self.x` is impossible in a case, temporaries need to be used:
+
+```python
+class Point3d:
+    def __init__(self, pt):
+        match pt:
+            case (x, y):
+                z = 0
+            case (x, y, z):
+                pass
+            case Point2d(x, y):
+                z = 0
+            case Point3d(x, y, z):
+                pass
+            case _:
+                raise TypeError("not a point we support")
+        self.x = x
+        self.y = y
+        self.z = z
+```
 
 ### Django example
 
