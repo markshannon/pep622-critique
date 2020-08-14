@@ -1082,7 +1082,7 @@ Both `turtle.TNavigator.distance` and `turtle.TNavigator.towards` contain the sa
         return None
 ```
 
-## ast.liter_eval
+## ast.literal_eval
 
 ### Original
 
@@ -1591,26 +1591,6 @@ I've elided a lot of complex logic int cases, as it is not relevant.
         return references_for_item(item.rhs)
     else:
         raise RuntimeError(f"Unknown item: {type(item)}")
-```
-
-
-## mailbox.MaildirMessage._explain_to
-
-### Original
-
-```python
-```
-
-### PEP 622
-
-```python
-
-```
-
-### type.__contains__
-
-```python
-
 ```
 
 
