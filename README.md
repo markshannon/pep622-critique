@@ -3,7 +3,7 @@
 
 For a PEP to succeed it needs to show two things.
 
- 1. Exactly what problem is being solved, or what need is to be fulfilled, and that is a sufficiently large problem or need to merit the proposed change.
+ 1. Exactly what problem is being solved, or what need is to be fulfilled, and that there is a sufficiently large problem or need to merit the proposed change.
  2. That the proposed change is the best known solution for the problem being addressed.
 
 PEP 622 fails to show either of these things.
@@ -55,8 +55,8 @@ else:
     label = key.replace('_', ' ').title()
 ```
 
-This is quite a complex example. The case we want to distinguish is where `value` is either a `list` or `tuple`, there are at least 2 elements in `value`,
-and the last element is either a `Promise` or a `str`.
+This is quite a complex example. The case we want to distinguish is where `value` is either a `list` or `tuple`,
+there are at least 2 elements in `value`, and the last element is either a `Promise` or a `str`.
 The code is not very concise, but is reasonably clear.
 
 The version of this example given in PEP 626 is as follows:
@@ -69,7 +69,7 @@ match value:
         label = key.replace('_', ' ').title()
 ```
 
-This is highly confusing. The use of the walrus operator with a sequence match makes the order of evaluation hard to follow. The test `if v` after `v` is assigned is confusing in a `match` statement which, one would expect, does assignment only when a match occurs.
+This is confusing. The use of the walrus operator with a sequence match makes the order of evaluation hard to follow. The test `if v` after `v` is assigned is confusing in a `match` statement which, one would expect, does assignment only when a match occurs.
 This means that if `value` has a length of one, then `[]` is assigned to `v`, even though the the first case does not match.
 
 It shouldn't be this complicated.
@@ -121,10 +121,10 @@ We can already do this in Python 3.9:
 
 ```
 def is_tuple(node):
-    if isinstance(node, Node) and len(node.children) in (2, 3):
+    if isinstance(node, Node):
         l, *n, r = node.children
         if l == LParen() and r == RParen():
-            return not n or isinstance(n[0], Node)
+            return not n or len(n) == 1 and isinstance(n[0], Node)
     return False
 ```
 
@@ -175,7 +175,8 @@ See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 Searching the entire CPython Python code base (~630k LOC) shows a few of cases where PEP 622 shows readability advantages over much simpler alternatives.
 That's about one line of code per 100 thousand.
 
-This demonstrates that there's no advantage to combining type and length tests with destructuring.  Nor does PEP 622 promise to make the code faster.
+This demonstrates that there's no advantage to combining type and length tests with destructuring.
+Nor does PEP 622 promise to make the code faster.
 Having them separate is much simpler and causes no actual loss in expressibilty or speed.
 
 ## Alternative approaches
@@ -234,7 +235,7 @@ match key:
 
 but this is a mis-translation. A key of `1` now becomes `"true"` instead of `"1"`.
 
-The correct, and non-obvious, translation is:
+A correct, but non-obvious, translation is:
 
 ```python
 match key:

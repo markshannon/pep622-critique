@@ -31,7 +31,7 @@ switch response.status:
     case HTTP_UPGRADE:
         sleep(DELAY)  # Server is swamped, try after a bit
         retry()
-    case _:
+    else:
         raise RequestError("we couldn't get the data")
 ```
 
