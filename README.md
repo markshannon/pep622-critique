@@ -219,7 +219,7 @@ Very few examples were given, however, of where it would be useful. So it's hard
 See [Possible switch statement](./switch.md) for a hypothetical switch statement.
 Note that the suggested syntax is just for comparison; there are many alternatives. See [PEP 3103](https://www.python.org/dev/peps/pep-3103/).
 
-## Failings
+## Irregularities and surprising behavior
 
 PEP 622 is large and complicated, which makes it far too easy to make mistakes.
 Many features that might be assumed to do one thing in fact do another, silently changing the meaning of the program rather than failing.
