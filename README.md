@@ -83,7 +83,7 @@ This is quite a complex example. The case we want to distinguish is where `value
 there are at least 2 elements in `value`, and the last element is either a `Promise` or a `str`.
 The code is not very concise, but is reasonably clear.
 
-The version of this example given in PEP 626 is as follows:
+The version of this example given in PEP 622 is as follows:
 
 ```
 match value:
@@ -101,7 +101,7 @@ It shouldn't be this complicated.
 
 Also note:
 The match version has different semantics. This has been pointed out to the PEP's authors but they have so far declined to either update the example or state in the PEP that the semantics are different.
-If the exact semantics are to be retained, then the PEP 626 example should read
+If the exact semantics are to be retained, then the PEP 622 example should read
 
 ```
 match value:
@@ -127,7 +127,7 @@ def is_tuple(node):
             and node.children[2].value == ")")
 ```
 
-PEP 626 shows this example rewritten as:
+PEP 622 shows this example rewritten as:
 
 ```
 def is_tuple(node: Node) -> bool:
@@ -173,7 +173,7 @@ match response.status:
 
 The final example is a simple switch statement, and shows that there may be some merit in adding
 switch-statement-like functionality to Python.
-However, PEP 626 prevents the use of simple symbolic constants, so the statement *cannot* be written as
+However, PEP 622 prevents the use of simple symbolic constants, so the statement *cannot* be written as
 
 ```
 match response.status:
@@ -190,9 +190,9 @@ match response.status:
         raise RequestError("we couldn't get the data")
 ```
 
-Note that PEP 626 does not prohibit the above syntax.  It merely assigns `response.status` to `HTTP_OK` regardless of the status and changing what was assumed to be a constant.
+Note that PEP 622 does not prohibit the above syntax.  It merely assigns `response.status` to `HTTP_OK` regardless of the status and changing what was assumed to be a constant.
 
-## Analysis of the potential usefulness of PEP 626
+## Analysis of the potential usefulness of PEP 622
 
 See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 
@@ -205,7 +205,7 @@ Having them separate is much simpler and causes no actual loss in expressibilty 
 
 ## Alternative approaches
 
-The response to PEP 626 was positive, suggesting that there is demand for some additional syntax.
+The response to PEP 622 was positive, suggesting that there is demand for some additional syntax.
 Very few examples were given, however, of where it would be useful. So it's hard to guess what the desirable features are. The rationale suggests that chains of `elif`s involving type tests are well suited to be improved by the match statement, though these are comparatively rare in Python where "duck typing" is the norm.
 
 ### Suggestions
