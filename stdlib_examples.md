@@ -1175,7 +1175,8 @@ Both `turtle.TNavigator.distance` and `turtle.TNavigator.towards` contain the sa
 
 ## plistlib._BinaryPlistWriter._write_object
 
-I've elided a lot of complex logic int cases, as it is not relevant.
+I've elided the complex logic in the `str` and `dict` cases.
+There is no destructuring involved in either of these cases, and the code would be identical in all three examples.
 
 ### Original
 
@@ -1187,7 +1188,23 @@ I've elided a lot of complex logic int cases, as it is not relevant.
     elif value is True:
         self._fp.write(b'\x09')
     elif isinstance(value, int):
-        ... # process int
+        if value < 0:
+            try:
+                self._fp.write(struct.pack('>Bq', 0x13, value))
+            except struct.error:
+                raise OverflowError(value) from None
+        elif value < 1 << 8:
+            self._fp.write(struct.pack('>BB', 0x10, value))
+        elif value < 1 << 16:
+            self._fp.write(struct.pack('>BH', 0x11, value))
+        elif value < 1 << 32:
+            self._fp.write(struct.pack('>BL', 0x12, value))
+        elif value < 1 << 63:
+            self._fp.write(struct.pack('>BQ', 0x13, value))
+        elif value < 1 << 64:
+            self._fp.write(b'\x14' + value.to_bytes(16, 'big', signed=True))
+        else:
+            raise OverflowError(value)
     elif isinstance(value, float):
         self._fp.write(struct.pack('>Bd', 0x23, value))
     elif isinstance(value, datetime.datetime):
@@ -1199,7 +1216,18 @@ I've elided a lot of complex logic int cases, as it is not relevant.
     elif isinstance(value, str):
         ... # process str
     elif isinstance(value, UID):
-        ... # process UID -- Uses value.data
+        if value.data < 0:
+            raise ValueError("UIDs must be positive")
+        elif value.data < 1 << 8:
+            self._fp.write(struct.pack('>BB', 0x80, value))
+        elif value.data < 1 << 16:
+            self._fp.write(struct.pack('>BH', 0x81, value))
+        elif value.data < 1 << 32:
+            self._fp.write(struct.pack('>BL', 0x83, value))
+        elif value.data < 1 << 64:
+            self._fp.write(struct.pack('>BQ', 0x87, value))
+        else:
+            raise OverflowError(value)
     elif isinstance(value, (list, tuple)):
         refs = [self._getrefnum(o) for o in value]
         s = len(refs)
@@ -1221,7 +1249,23 @@ I've elided a lot of complex logic int cases, as it is not relevant.
             else:
                 self._fp.write(b'\x08')
         case int():
-            ... # process int
+            if value < 0:
+                try:
+                    self._fp.write(struct.pack('>Bq', 0x13, value))
+                except struct.error:
+                    raise OverflowError(value) from None
+            elif value < 1 << 8:
+                self._fp.write(struct.pack('>BB', 0x10, value))
+            elif value < 1 << 16:
+                self._fp.write(struct.pack('>BH', 0x11, value))
+            elif value < 1 << 32:
+                self._fp.write(struct.pack('>BL', 0x12, value))
+            elif value < 1 << 63:
+                self._fp.write(struct.pack('>BQ', 0x13, value))
+            elif value < 1 << 64:
+                self._fp.write(b'\x14' + value.to_bytes(16, 'big', signed=True))
+            else:
+                raise OverflowError(value)
         case float():
             self._fp.write(struct.pack('>Bd', 0x23, value))
         case datetime.datetime():
@@ -1233,7 +1277,18 @@ I've elided a lot of complex logic int cases, as it is not relevant.
         case str():
             ... # process str
         case UID(data):
-            ... # process UID -- Uses data
+            if data < 0:
+                raise ValueError("UIDs must be positive")
+            elif data < 1 << 8:
+                self._fp.write(struct.pack('>BB', 0x80, value))
+            elif data < 1 << 16:
+                self._fp.write(struct.pack('>BH', 0x81, value))
+            elif data < 1 << 32:
+                self._fp.write(struct.pack('>BL', 0x83, value))
+            elif data < 1 << 64:
+                self._fp.write(struct.pack('>BQ', 0x87, value))
+            else:
+                raise OverflowError(value)
         case [*_]:
             refs = [self._getrefnum(o) for o in value]
             s = len(refs)
@@ -1241,6 +1296,8 @@ I've elided a lot of complex logic int cases, as it is not relevant.
             self._fp.write(struct.pack('>' + self._ref_format * s, *refs))
         case dict():
             ... # process dict
+        else:
+            raise TypeError(value)
         case _:
             if value is None:
                 self._fp.write(b'\x00')
@@ -1249,7 +1306,7 @@ I've elided a lot of complex logic int cases, as it is not relevant.
 
 ```
 
-### type.__contains__
+### type.__contains__ and switch
 
 ```python
    if value is None:
@@ -1259,7 +1316,24 @@ I've elided a lot of complex logic int cases, as it is not relevant.
     elif value is True:
         self._fp.write(b'\x09')
     elif value in int:
-        ... # process int
+        switch value:
+            case < 0:
+                try:
+                    self._fp.write(struct.pack('>Bq', 0x13, value))
+                except struct.error:
+                    raise OverflowError(value) from None
+            case < 1 << 8:
+                self._fp.write(struct.pack('>BB', 0x10, value))
+            case < 1 << 16:
+                self._fp.write(struct.pack('>BH', 0x11, value))
+            case < 1 << 32:
+                self._fp.write(struct.pack('>BL', 0x12, value))
+            case  < 1 << 63:
+                self._fp.write(struct.pack('>BQ', 0x13, value))
+            case < 1 << 64:
+                self._fp.write(b'\x14' + value.to_bytes(16, 'big', signed=True))
+            else:
+                raise OverflowError(value)
     elif value in float:
         self._fp.write(struct.pack('>Bd', 0x23, value))
     elif value in datetime.datetime:
@@ -1271,7 +1345,19 @@ I've elided a lot of complex logic int cases, as it is not relevant.
     elif value in str:
         ... # process str
     elif value in UID:
-        ... # process UID -- Uses value.data
+        switch value.data:
+            case < 0:
+                raise ValueError("UIDs must be positive")
+            case < 1 << 8:
+                self._fp.write(struct.pack('>BB', 0x80, value))
+            case < 1 << 16:
+                self._fp.write(struct.pack('>BH', 0x81, value))
+            case < 1 << 32:
+                self._fp.write(struct.pack('>BL', 0x83, value))
+            case < 1 << 64:
+                self._fp.write(struct.pack('>BQ', 0x87, value))
+            else:
+                raise OverflowError(value)
     elif value in list or value in tuple:
         refs = [self._getrefnum(o) for o in value]
         s = len(refs)
@@ -1281,7 +1367,6 @@ I've elided a lot of complex logic int cases, as it is not relevant.
         ... # process dict
     else:
         raise TypeError(value)
-
 ```
 
 
