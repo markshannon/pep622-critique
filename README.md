@@ -7,7 +7,7 @@ This document attempts an objective and fair analysis of PEP 622.
 From this analysis, I conclude that PEP 622 has small, possibly negative, net benefit, but high cost in terms of complexity and surprising behaviour.
 
 This analysis includes what I believe to be a rigourous and objective analysis of applying PEP 622 to the entire CPython codebase.
-All `if` statements where PEP 622 could be useful are analysed, comparing PEP 622 with with Python 3.9, Python with a simple switch statement, and Python with an operator form of `isinstance`.
+All `if` statements where PEP 622 could be useful are analysed, comparing PEP 622 with Python 3.9, Python with a simple switch statement, and Python with an operator form of `isinstance`.
 
 ## Introduction
 
