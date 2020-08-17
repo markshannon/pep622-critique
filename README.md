@@ -277,14 +277,14 @@ Using the match statement as a switch statement, as several people on the python
 one might write the following:
 
 ```python
-match repsonse:
+match response:
     case HTTP_OK:
         ...
     case HTTP_UNAUTHORIZED:
         ...
 ```
 
-but if repsonse is `HTTP_UNAUTHORIZED` this code not only does the wrong thing, it assigns to `HTTP_UNAUTHORIZED` to `HTTP_OK` potentially causing other bugs.
+but if response is `HTTP_UNAUTHORIZED` this code not only does the wrong thing, it assigns to `HTTP_UNAUTHORIZED` to `HTTP_OK` potentially causing other bugs.
 
 ### Self attributes
 
