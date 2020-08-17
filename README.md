@@ -1,18 +1,58 @@
 # Critique of PEP 622 (Structural Pattern Matching)
 
+## Abstract
+
+This document attempts an objective, where possible, and fair analysis of PEP 622.
+
+From this analysis, I conclude that PEP 622 has small, possibly negative, net benefit, but high cost in terms of complexity and surprising behaviour.
+
+This analysis includes what I believe to be a rigourous and objective analysis of applying PEP 622 to the entire CPython codebase.
+All `if` statements where PEP 622 could be useful are analysed, comparing PEP 622 with with Python 3.9, Python with a simple switch statement, and Python with an operator form of `isinstance`.
+
+## Introduction
 
 For a PEP to succeed it needs to show two things.
 
  1. Exactly what problem is being solved, or what need is to be fulfilled, and that there is a sufficiently large problem or need to merit the proposed change.
  2. That the proposed change is the best known solution for the problem being addressed.
 
-PEP 622 fails to show either of these things.
+There is some evidence that there is a problem to solved, but it is very weak given the scale of the proposed changes.
+However, PEP 622 fails completely to show that the proposed change is the best known solution.
 
 PEP 622 provides only three examples of where the proposed pattern matching would be useful, yet proposes a very large change to the language; possibly the largest single change since Python 1.
 
 PEP 622 claims to be a general way to express a number of related things, but fails to live up to that promise as it involves many special cases and upsets any intuition that comes from familiarity with the rest of the language.
 
 It also claims to be *structural* pattern matching, but relies on the interface of objects, not their structure when unpacking.
+
+## Analysis of the potential usefulness of PEP 622
+
+See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
+
+Searching the entire CPython Python code base (~630k LOC) shows a few `if` statements where PEP 622 shows any readability advantages over much simpler alternatives. The exact number of `if` statements where PEP 622 shows improvement is subjective, but is hard to see how anyone would consider more than a few of these cases to be best expressed using the PEP 622 `match` statement.
+Regardless of the exact number, it is very few in over 600 thousand lines of code.
+
+This analysis demonstrates that there's no advantage to combining type and length tests with destructuring.
+Nor does PEP 622 promise to make the code faster.
+Having them separate is much simpler and causes no actual loss in expressibilty or speed.
+
+## Alternative approaches
+
+The response to PEP 622 was positive, suggesting that there is demand for some additional syntax.
+Very few examples were given, however, of where it would be useful. So it's hard to guess what the desirable features are. The rationale suggests that chains of `elif`s involving type tests are well suited to be improved by the match statement, though these are comparatively rare in Python where "duck typing" is the norm.
+
+### Suggestions
+
+The following are my opinions and this list is far from being exhaustive.
+
+1. Do nothing. Guaranteed bug-free and zero maintenance cost. Probably the best option, in my opinion.
+2. Implement `__contains__` on `type`, allows `isinstance(x, str)` to be written as `x in str`. Improves readability in code involving `isinstance` tests, but may allow some errors to pass silently.
+3. Add a `isa` or simliar instance check operator, to avoid confusion with overloading `in`.
+4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s where all the tests apply to the same variable.
+5. Implement more powerful unpacking syntax. For example, zero-or-one matches, named matches, or allowing classes to define their own unpacking.
+
+See [Possible switch statement](./switch.md) for a hypothetical switch statement.
+Note that the suggested syntax is just for comparison; there are many alternatives. See [PEP 3103](https://www.python.org/dev/peps/pep-3103/).
 
 ## Analysis of the examples in PEP 622
 
@@ -191,33 +231,6 @@ match response.status:
 ```
 
 Note that PEP 622 does not prohibit the above syntax.  It merely assigns `response.status` to `HTTP_OK` regardless of the status and changing what was assumed to be a constant.
-
-## Analysis of the potential usefulness of PEP 622
-
-See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
-
-Searching the entire CPython Python code base (~630k LOC) shows a few of cases where PEP 622 shows readability advantages over much simpler alternatives.
-That's about one line of code per 100 thousand.
-
-This demonstrates that there's no advantage to combining type and length tests with destructuring.
-Nor does PEP 622 promise to make the code faster.
-Having them separate is much simpler and causes no actual loss in expressibilty or speed.
-
-## Alternative approaches
-
-The response to PEP 622 was positive, suggesting that there is demand for some additional syntax.
-Very few examples were given, however, of where it would be useful. So it's hard to guess what the desirable features are. The rationale suggests that chains of `elif`s involving type tests are well suited to be improved by the match statement, though these are comparatively rare in Python where "duck typing" is the norm.
-
-### Suggestions
-
-1. Do nothing. Guaranteed bug-free and zero maintenance cost. Probably the best option, in my opinion.
-2. Implement `__contains__` on `type`, allows `isinstance(x, str)` to be written as `x in str`. Improves readability in code involving `isinstance` tests, but may allow some errors to pass silently.
-3. Add a `isa` or simliar instance check operator, to avoid confusion with overloading `in`.
-4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s where all the tests apply to the same variable.
-5. Implement more powerful unpacking syntax. For example, zero-or-one matches, named matches, or allowing classes to define their own unpacking.
-
-See [Possible switch statement](./switch.md) for a hypothetical switch statement.
-Note that the suggested syntax is just for comparison; there are many alternatives. See [PEP 3103](https://www.python.org/dev/peps/pep-3103/).
 
 ## Irregularities and surprising behavior
 
