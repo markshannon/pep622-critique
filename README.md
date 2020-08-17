@@ -126,7 +126,7 @@ The code is not very concise, but is reasonably clear.
 
 The version of this example given in PEP 622 is as follows:
 
-```
+```python
 match value:
     case [*v, label := (Promise() | str())] if v:
         value = tuple(v)
@@ -144,7 +144,7 @@ Also note:
 The match version has different semantics. This has been pointed out to the PEP's authors but they have so far declined to either update the example or state in the PEP that the semantics are different.
 If the exact semantics are to be retained, then the PEP 622 example should read
 
-```
+```python
 match value:
     case [*v, label := (Promise() | str())] if v and isinstance(value, (list, tuple)):
         value = tuple(v)
@@ -155,7 +155,7 @@ match value:
 
 ### is_tuple example
 
-```
+```python
 def is_tuple(node):
     if isinstance(node, Node) and node.children == [LParen(), RParen()]:
         return True
@@ -170,7 +170,7 @@ def is_tuple(node):
 
 PEP 622 shows this example rewritten as:
 
-```
+```python
 def is_tuple(node: Node) -> bool:
     match node:
         case Node(children=[LParen(), RParen()]):
@@ -184,7 +184,7 @@ def is_tuple(node: Node) -> bool:
 This is merely taking code that is a bit verbose and rewriting it more concisely.
 We can already do this in Python 3.9:
 
-```
+```python
 def is_tuple(node):
     if isinstance(node, Node):
         l, *n, r = node.children
@@ -197,7 +197,7 @@ which is shorter, arguably clearer, and needs no new syntax.
 
 ### HTTP response example
 
-```
+```python
 match response.status:
     case 200:
         do_something(response.data)  # OK
@@ -216,7 +216,7 @@ The final example is a simple switch statement, and shows that there may be some
 switch-statement-like functionality to Python.
 However, PEP 622 prevents the use of simple symbolic constants, so the statement *cannot* be written as
 
-```
+```python
 match response.status:
     case HTTP_OK:
         do_something(response.data)  # OK
