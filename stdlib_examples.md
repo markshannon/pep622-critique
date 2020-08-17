@@ -1116,7 +1116,7 @@ Both `turtle.TNavigator.distance` and `turtle.TNavigator.towards` contain the sa
 
 ### PEP 622 version
 
-```
+```python
     match node:
         case Constant():
             return node.value
@@ -1145,7 +1145,7 @@ Both `turtle.TNavigator.distance` and `turtle.TNavigator.towards` contain the sa
 
 ### Using type.__contains__
 
-```
+```python
     if node in Constant:
         return node.value
     elif node in Tuple:
@@ -1713,14 +1713,14 @@ Using this extension, the `smtpd.parseargs` example could be rewritten as:
 
 A common pattern seems to be the following:
 
-```
+```python
     elif len(args) == 1:
         val = args[0]
 ```
 
 Whilst this converts neatly to PEP 622 syntax, it doesn't improve the code.
 
-```
+```python
     match args:
         case [val]:
             pass
