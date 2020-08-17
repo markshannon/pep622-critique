@@ -246,15 +246,15 @@ Starting with the JSON encoder code as an example:
 The direct transliteration is:
 
 ```python
-match key:
-    ...
-    case True:
-        key = 'true'
-    case False:
-        key = 'false'
-    case int():
-        key = _intstr(key)
-    ...
+    match key:
+        ...
+        case True:
+            key = 'true'
+        case False:
+            key = 'false'
+        case int():
+            key = _intstr(key)
+        ...
 ```
 
 but this is a mis-translation. A key of `1` now becomes `"true"` instead of `"1"`.
@@ -262,13 +262,13 @@ but this is a mis-translation. A key of `1` now becomes `"true"` instead of `"1"
 A correct, but non-obvious, translation is:
 
 ```python
-match key:
-    ...
-    case bool():
-        key = 'true' if key else 'false'
-    case int():
-        key = _intstr(key)
-    ...
+    match key:
+        ...
+        case bool():
+            key = 'true' if key else 'false'
+        case int():
+            key = _intstr(key)
+        ...
 ```
 
 ### Cannot use (undotted) symbolic constants
@@ -286,17 +286,45 @@ match repsonse:
 
 but if repsonse is `HTTP_UNAUTHORIZED` this code not only does the wrong thing, it assigns to `HTTP_UNAUTHORIZED` to `HTTP_OK` potentially causing other bugs.
 
+### Cannot use easily names from the builtin namespace in cases
+
+This has the same root cause as the problem with symbolic constants.
+
+
+```python
+    match type(x): # We want to match on exact type
+        case bool:
+            print("bool")
+        case int:
+            print("int")
+        case float:
+            print("float")
+```
+
+This will print "bool" regardless of the input. PEP 622 says that dotted names should be used for constant values, which means the following workaround must be used:
+
+```python
+    import builtins
+    match type(x): # We want to match on exact type
+        case builtins.bool:
+            print("bool")
+        case builtins.int:
+            print("int")
+        case builtins.float:
+            print("float")
+```
+
 ### Self attributes
 
 PEP 622 treats any name with a dot in it as a constant, so the way to fix the previous example is to use a dotted name; `HTTP_CONSTANTS.HTTP_OK` instead of just `HTTP_OK`.
 The problem with this is that a minor syntax element within the pattern determines whether it is read or written to. This is likely to be a source of confusion when using attributes of local variables, particularly `self`.
 
 ```python
-match var:
-    case self.x: # test var == self.attr
-        ...
-    case x: # assignment of x
-        ...
+    match var:
+        case self.x: # test var == self.attr
+            ...
+        case x: # assignment of x
+            ...
 ```
 
 A programmer unfamiliar with PEP 622 might interpret these two case statements as doing similar things.
