@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This document attempts an objective, where possible, and fair analysis of PEP 622.
+This document attempts an objective and fair analysis of PEP 622.
 
 From this analysis, I conclude that PEP 622 has small, possibly negative, net benefit, but high cost in terms of complexity and surprising behaviour.
 
@@ -29,7 +29,7 @@ It also claims to be *structural* pattern matching, but relies on the interface 
 
 See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 
-Searching the entire CPython Python code base (~630k LOC) shows a few `if` statements where PEP 622 shows any readability advantages over much simpler alternatives. The exact number of `if` statements where PEP 622 shows improvement is subjective, but is hard to see how anyone would consider more than a few of these cases to be best expressed using the PEP 622 `match` statement.
+Searching the entire CPython Python code base (~630k LOC) finds only a few `if` statements where PEP 622 shows any readability advantages over much simpler alternatives. The exact number of `if` statements where PEP 622 shows improvement is subjective, but is hard to see how anyone would consider more than four or five to be best expressed using the PEP 622 `match` statement.
 Regardless of the exact number, it is very few in over 600 thousand lines of code.
 
 This analysis demonstrates that there's no advantage to combining type and length tests with destructuring.
