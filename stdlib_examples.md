@@ -64,7 +64,7 @@ https://lgtm.com/projects/g/python/cpython/snapshot/65ae89f84ef1db8c130b1a3dafc0
 
 For each example I have shown the (trimmed) original, and the same code rewritten using PEP 622 matching, and (where relevant) using `type.__contains__`, or a simple `switch` statement, along the lines of PEP 275, for comparison.
 
-I have removed comments from the original to avoid obsuring the syntax.
+I have removed comments from the original to avoid obscuring the syntax.
 
 # Examples
 
@@ -223,7 +223,7 @@ I have removed comments from the original to avoid obsuring the syntax.
             raise ValueError(f"Unexpected line found in Tokens file: {line}")
 ```
 
-### Alternative implementation
+### Python 3.9
 ```python
     if len(pieces) in (1,2):
         token, *op = pieces:
@@ -541,7 +541,7 @@ I have removed comments from the original to avoid obsuring the syntax.
             raise ValueError("invalid option tuple: %r" % (option,))
 ```
 
-### Alternative Python implementation
+### Python 3.9
 
 ```python
     if len(option) in (3, 4):
@@ -849,7 +849,7 @@ Also, not the potential confusion as the variable and `Rational` attribute name 
             usage(1, 'Invalid arguments: %s' % COMMASPACE.join(args))
 ```
 
-### Alternative Python implementation
+### Python 3.9
 
 ```python
     remotespec = 'localhost:25'
@@ -1069,7 +1069,7 @@ Both `turtle.TNavigator.distance` and `turtle.TNavigator.towards` contain the sa
             return None
 ```
 
-### Rewritten more concisely in Python 3.9
+### Python 3.9
 
 ```python
     if len(tm) == 1 and '.' in tm[0]:

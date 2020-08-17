@@ -29,7 +29,8 @@ It also claims to be *structural* pattern matching, but relies on the interface 
 
 See [Analysis of standard library](./stdlib_examples.md) for detailed analysis.
 
-Searching the entire CPython Python code base (~630k LOC) finds only a few `if` statements where PEP 622 shows any readability advantages over much simpler alternatives. The exact number of `if` statements where PEP 622 shows improvement is subjective, but is hard to see how anyone would consider more than four or five to be best expressed using the PEP 622 `match` statement.
+Searching the entire CPython Python code base (~630k LOC) finds only a few `if` statements where PEP 622 shows any readability advantages over much simpler alternatives. The exact number of `if` statements where PEP 622 shows improvement is subjective.
+However, it is hard to see how PEP 622 shows a significant readability improvement for more than three or four of those `if` statements.
 Regardless of the exact number, it is very few in over 600 thousand lines of code.
 
 This analysis demonstrates that there's no advantage to combining type and length tests with destructuring.
@@ -45,7 +46,7 @@ Very few examples were given, however, of where it would be useful. So it's hard
 
 The following are my opinions and this list is far from being exhaustive.
 
-1. Do nothing. Guaranteed bug-free and zero maintenance cost. Probably the best option, in my opinion.
+1. Do nothing. Guaranteed bug-free and zero maintenance cost.
 2. Implement `__contains__` on `type`, allows `isinstance(x, str)` to be written as `x in str`. Improves readability in code involving `isinstance` tests, but may allow some errors to pass silently.
 3. Add a `isa` or simliar instance check operator, to avoid confusion with overloading `in`.
 4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s where all the tests apply to the same variable.
