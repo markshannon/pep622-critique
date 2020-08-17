@@ -213,8 +213,8 @@ Very few examples were given, however, of where it would be useful. So it's hard
 1. Do nothing. Guaranteed bug-free and zero maintenance cost. Probably the best option, in my opinion.
 2. Implement `__contains__` on `type`, allows `isinstance(x, str)` to be written as `x in str`. Improves readability in code involving `isinstance` tests, but may allow some errors to pass silently.
 3. Add a `isa` or simliar instance check operator, to avoid confusion with overloading `in`.
-4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s.
-5. Implement more powerful unpacking syntax, for example zero-or-one matches, or named matches.
+4. Implement a "switch" statement, which is just syntactic sugar for a chain of `elif`s where all the tests apply to the same variable.
+5. Implement more powerful unpacking syntax. For example, zero-or-one matches, named matches, or allowing classes to define their own unpacking.
 
 See [Possible switch statement](./switch.md) for a hypothetical switch statement.
 Note that the suggested syntax is just for comparison; there are many alternatives. See [PEP 3103](https://www.python.org/dev/peps/pep-3103/).
