@@ -1296,8 +1296,6 @@ There is no destructuring involved in either of these cases, and the code would 
             self._fp.write(struct.pack('>' + self._ref_format * s, *refs))
         case dict():
             ... # process dict
-        else:
-            raise TypeError(value)
         case _:
             if value is None:
                 self._fp.write(b'\x00')
