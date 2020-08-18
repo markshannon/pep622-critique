@@ -285,6 +285,17 @@ A correct, but non-obvious, translation is:
         ...
 ```
 
+### Undefined semantics
+
+PEP 622 states:
+
+> User code including a match statement should not rely on the bindings being made for a failed match,
+> but also shouldn't assume that variables are unchanged by a failed match. This part of the behavior
+> is left intentionally unspecified so different implementations can add optimizations, and to prevent
+> introducing semantic restrictions that could limit the extensibility of this feature.
+
+This is a backward step for Python. Python has strict evaluation order. For example, care is taken to ensure that keys are evaluated  before values in `dict` literals. It would be a shame to throw that away.
+
 ### Cannot use (undotted) symbolic constants
 
 Using the match statement as a switch statement, as several people on the python-dev mailing list have done,
