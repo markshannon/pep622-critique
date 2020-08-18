@@ -287,6 +287,20 @@ A correct, but non-obvious, translation is:
 
 ### Undefined semantics
 
+#### Undefined order of execution
+
+PEP 622 states:
+
+> This is not the only possible strategy, nor is it necessarily the best. For example, the instance
+> checks could be memoized, especially if there are multiple instances of the same class type but
+> with different arguments in a single match statement. It is also theoretically possible for a
+> future implementation to process case clauses or sub-patterns in parallel using a decision tree
+> rather than testing them one by one.
+
+This is a backward step for Python. Python has strict evaluation order. For example, care is taken to ensure that keys are evaluated  before values in `dict` literals. It would be a shame to throw that away.
+
+#### Undefined assignments
+
 PEP 622 states:
 
 > User code including a match statement should not rely on the bindings being made for a failed match,
@@ -294,7 +308,27 @@ PEP 622 states:
 > is left intentionally unspecified so different implementations can add optimizations, and to prevent
 > introducing semantic restrictions that could limit the extensibility of this feature.
 
-This is a backward step for Python. Python has strict evaluation order. For example, care is taken to ensure that keys are evaluated  before values in `dict` literals. It would be a shame to throw that away.
+What this means is that for a case like
+
+```python
+    case (0, x, 1)
+```
+
+`x` may, or may not, be defined. This could be a problem for code like the following:
+
+```python
+    surname = ""
+    match person:
+        case firstname, surname, None:
+            query = ""
+        case firstname, surname, job:
+            pass
+        case firstname, job:
+            pass
+```
+
+If `person` is `"john", "doe", "fall guy"`, then `surname` may be "", "doe" or some other value.
+PEP 622 explicitly states that it is undefined.
 
 ### Cannot use (undotted) symbolic constants
 
@@ -356,6 +390,23 @@ A programmer unfamiliar with PEP 622 might interpret these two case statements a
 But PEP 622 interprets them very differently.  In particular, it interprets `self.x` as a *constant*
 which it clearly is not.
 
+### Handling of iterables is inconsistent with the rest of the language
+
+PEP 622 states:
+
+> To match a sequence pattern the subject must be an instance of collections.abc.Sequence,
+> and it cannot be any kind of string (str, bytes, bytearray). It cannot be an iterator.
+
+The proposed behavior is inconsistent with the rest of the language, but no explanation is given of why this should be so.
+
+This is inconsistent behavior is likely to cause bugs in the following cases:
+
+* Translation of `if`/`elif` statements might well be incorrect for sequences that are not registered as `collections.abc.Sequence`, or are one of `str`, `bytes`, or `bytearray`.
+* Mixing `case` unpacking and normal unpacking becomes more difficult.
+
+It also makes the core language dependent on the `collections.abc` module.
+This is unnecessary and undesirable, as it prevents duck-typing and makes the semantics of statements dependent on the filesystem and import machinery.
+
 ### Attribute lookups with side-effects
 
 PEP 622 does not specify order of execution, or the number of times that an attribute may be executed. In fact, it explicitly states that "User code relying on that behavior should be considered buggy."
@@ -370,4 +421,7 @@ ORMs and many other libraries have side-effecting properties. Even the standard 
 # Summary
 
 PEP 622 promises easy-to-use structural pattern matching, but delivers a complicated-to-use sub-language of little value with many complexities and corner cases.
-It should be rejected.
+It should be rejected for two reasons:
+
+* Pattern matching is not as valuable for Python as it is languages like Haskell.
+* Accepting PEP 622 would prevent better designs for pattern matching, or something like it.
